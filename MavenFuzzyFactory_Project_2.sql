@@ -4,23 +4,26 @@ USE mavenfuzzyfactory;
 1. First, I’d like to show our volume growth. I will pull the overall session and order volume, 
 trended by quarter for the life of the business?
 */ 
-
 SELECT 
 	YEAR(website_sessions.created_at) AS yr,
 	QUARTER(website_sessions.created_at) AS qtr, 
 	COUNT(DISTINCT website_sessions.website_session_id) AS sessions, 
-    COUNT(DISTINCT orders.order_id) AS orders
+    	COUNT(DISTINCT orders.order_id) AS orders
 FROM website_sessions 
 	LEFT JOIN orders
 		ON website_sessions.website_session_id = orders.website_session_id
-GROUP BY 1,2
-ORDER BY 1,2
+	GROUP BY 1,2
+	ORDER BY 1,2
 ;
+/* 
+It's a great story for the business where we've gone session_to_order_conv_rate around 3% at the beginning and increased up to over 8% in the most current quarter
+Revenue per order has gone from a flat $49 back when the company only sold one product to starting some cross-selling and optimizing now getting that revenue per order up above $60
+Then we have the revenue per session, which initially was around $1.59 and now has gotten up to $5.3 in the most recent quarter
+*/
 
 /*
 2. Next, let’s showcase all of our efficiency improvements. I would love to show quarterly figures 
 since we launched, for session-to-order conversion rate, revenue per order, and revenue per session. 
-
 */
 
 SELECT 
@@ -36,12 +39,10 @@ GROUP BY 1,2
 ORDER BY 1,2
 ;
 
-
 /*
-3. I’d like to show how we’ve grown specific channels. I will pull a quarterly view of orders 
+3. I’d like to show how we’ve grown specific channels. I will pull a quarterly view of the orders 
 from Gsearch nonbrand, Bsearch nonbrand, brand search overall, organic search, and direct type-in?
 */
-
 
 SELECT 
 	YEAR(website_sessions.created_at) AS yr,
@@ -57,12 +58,17 @@ FROM website_sessions
 		ON website_sessions.website_session_id = orders.website_session_id
 GROUP BY 1,2
 ORDER BY 1,2
-
+/*
+We've gone from a place where back in Q2 2012 we had almost 300 gsearch non-brand and around 56 (brand_orders, organic_search_orders and direct_type_in_orders), a ratio 6 times
+Moving to the most current quarter we have about 1800 orders in Q1 2015 (brand_orders, organic_search_orders and direct_type_in_orders) compared to gsearch non-brand 3025, the ratio is now just less than 2.
+This means that the business has become less dependent on these paid search non-brand campaigns and is starting to build its own brand organic and direct type-in traffic, which has a better margin
+and take you out of the dependency of this search engine.
+*/
 ;
 
 /*
 4. Next, let’s show the overall session-to-order conversion rate trends for those same channels, 
-by quarter.Also make a note of any periods where we made major improvements or optimizations.
+by quarter. Also make a note of any periods where we made major improvements or optimizations.
 */
 
 SELECT 
@@ -84,13 +90,16 @@ FROM website_sessions
 GROUP BY 1,2
 ORDER BY 1,2
 ;
-
+/*
+The search non-brand conversion rate went from 3.2% to well over 8% in the most current quarter. 
+Similar story with B search and all of our direct channels, brand search, organic search and direct type-in all of these have seen substantial improvements over time from where they were initially to where they are now.
+These improvements are really going to impress investors and it shows that the company is what they are doing and they are trying to improve the business all the time.
+*/
 
 /*
 5. We’ve come a long way since the days of selling a single product. Let’s pull monthly trending for revenue 
 and margin by product, along with total sales and revenue. Note anything interesting about seasonality.
 */
-
 
 SELECT
 	YEAR(created_at) AS yr, 
@@ -109,7 +118,10 @@ FROM order_items
 GROUP BY 1,2
 ORDER BY 1,2
 ;
-
+/*
+There is an increase in the holiday season which is in Nov and Dec.
+Look closely at the love bear product, there is a major pop in Feb every year because this bear was targeted to couples for giving lovers as a gift around Valentine's day 
+*/
 
 /*
 6. Let’s dive deeper into the impact of introducing new products. I will pull monthly sessions to 
@@ -117,7 +129,7 @@ the /products page, and show how the % of those sessions clicking through anothe
 over time, along with a view of how conversion from /products to placing an order has improved.
 */
 
--- first, identifying all the views of the /products page
+-- First, identifying all the views of the /products page
 CREATE TEMPORARY TABLE products_pageviews
 SELECT
 	website_session_id, 
@@ -127,7 +139,6 @@ SELECT
 FROM website_pageviews 
 WHERE pageview_url = '/products'
 ;
-
 
 SELECT 
 	YEAR(saw_product_page_at) AS yr, 
@@ -145,6 +156,11 @@ FROM products_pageviews
 		ON orders.website_session_id = products_pageviews.website_session_id
 GROUP BY 1,2
 ;
+/*
+The click-through rate is going up from around 71% at the beginning of the business to 85% in the most recent month.
+And similarly the rate of people seeing the product page and converting to a full paying order has gone up from 8% to around 14% in the most recent months.
+So adding additional products may appeal better to customers and really impact the % of customers that are clicking through on the product page in a positive way.
+*/
 
 /*
 7. We made our 4th product available as a primary product on December 05, 2014 (it was previously only a cross-sell item). 
@@ -168,9 +184,6 @@ FROM primary_products
 		ON order_items.order_id = primary_products.order_id
         AND order_items.is_primary_item = 0; -- only bringing in cross-sells;
 
-
-
-
 SELECT 
 	primary_product_id, 
     COUNT(DISTINCT order_id) AS total_orders, 
@@ -193,6 +206,10 @@ FROM primary_products
         AND order_items.is_primary_item = 0 -- only bringing in cross-sells
 ) AS primary_w_cross_sell
 GROUP BY 1;
+/*
+The interesting thing here is that product 3 cross-sells pretty well with product 1 and product 4 cross-sells well with 3 other products, roughly 20%
+So it seems like adding product 4 at a lower price was probably a good thing for the business and maybe a major contributor to the higher average order value
+*/
 
 
 
