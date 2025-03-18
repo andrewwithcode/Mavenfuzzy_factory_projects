@@ -1,6 +1,4 @@
 use mavenfuzzyfactory;
-
-
 /*
 1.	Gsearch seems to be the biggest driver of our business. I will monthly 
 trends for gsearch sessions and orders so that we can showcase the growth there
@@ -18,7 +16,9 @@ FROM website_sessions
 WHERE website_sessions.created_at < '2012-11-27'
 	AND website_sessions.utm_source = 'gsearch'
 GROUP BY 1,2;
-
+/*
+The session volume is growing over time, In the first month there were only 1800 sessions but in the last month, there were 8800 sessions. The same picture for orders and the conversion rate as well
+*/
 /*
 2.	Next, it would be great to see a similar monthly trend for Gsearch, but this time splitting out nonbrand 
 and brand campaigns separately. I am wondering if brand is picking up at all. If so, this is a good story to tell. 
@@ -37,11 +37,14 @@ FROM website_sessions
 WHERE website_sessions.created_at < '2012-11-27'
 	AND website_sessions.utm_source = 'gsearch'
 GROUP BY 1,2;
+/*
+Brand campaigns represent someone going into search engines and explicitly looking for your business, the fact that this has been increased dramatically is a good sign for the business and investors.
+*/
 
 
 /*
-3.	While we’re on Gsearch, I will dive into nonbrand, and pull monthly sessions and orders split by device type? 
-I want to flex our analytical muscles a little and show the board we really know our traffic sources. 
+3. While we’re on Gsearch, I will dive into nonbrand, and pull monthly sessions and orders split by device type
+I want to flex our analytical muscles a little and show the board we know our traffic sources. 
 */ 
 
 SELECT
@@ -58,15 +61,16 @@ WHERE website_sessions.created_at < '2012-11-27'
 	AND website_sessions.utm_source = 'gsearch'
     AND website_sessions.utm_campaign = 'nonbrand'
 GROUP BY 1,2;
-
-
+/*
+As we can see desktop_orders is much larger than mobile_orders, starting from 50 desktop_orders, 5 times when compared to mobile_orders and in the last month 2012, the ratio has increased to 10 times.
+*/
 
 /*
 4.	I’m worried that one of our more pessimistic board members may be concerned about the large % of traffic from Gsearch. 
 I will monthly trends for Gsearch, alongside monthly trends for each of our other channels
 */ 
 
--- first, finding the various utm sources and referers to see the traffic we're getting
+-- First, finding the various utm sources and referrers to see the traffic we're getting
 
 SELECT DISTINCT 
 	utm_source,
@@ -74,7 +78,11 @@ SELECT DISTINCT
     http_referer
 FROM website_sessions
 WHERE website_sessions.created_at < '2012-11-27';
-
+/*
+We have Utm_source gsearch and bsearch, utm_campaign nonbrand and brand are paid channels.
+When utm_source, utm_campaign is null and http_referer is null, we know that it's direct type_in traffic
+When utm_source, utm_campaign is null and http_referer is not null then we know that it's organic search traffic Which means it's coming from the search engines, but it's not tagged with our paid tracking parameters.
+*/ 
 
 SELECT
 	YEAR(website_sessions.created_at) AS yr, 
@@ -88,11 +96,16 @@ FROM website_sessions
 		ON orders.website_session_id = website_sessions.website_session_id
 WHERE website_sessions.created_at < '2012-11-27'
 GROUP BY 1,2;
+/*
+We have organic_search_sessions and direct_type_in_sessions growing over time and this is a very wonderful news because these represent sessions that we are not paying for.
+With gsearch and bsearch paid sessions there's a cost of customer acquisition for any orders that come in, it eats into our margin but with the organic search and direct type-in sessions, that's all margin when you sell orders there,
+no additional cost for paying for that traffic
 
+*/ 
 
 /*
-5.	I’d like to tell the story of our website performance improvements over the course of the first 8 months. 
-I will pull session to order conversion rates, by month
+5.	I’d like to tell the story of our website performance improvements over the first 8 months. 
+I will pull session-to-order conversion rates, by month
 
 */ 
 
@@ -107,7 +120,9 @@ FROM website_sessions
 		ON orders.website_session_id = website_sessions.website_session_id
 WHERE website_sessions.created_at < '2012-11-27'
 GROUP BY 1,2;
-
+/*
+The conversion rate is growing from 0.03 to 0.044, this is a good picture to tell.
+*/ 
 /*
 6.	For the gsearch lander test, please estimate the revenue that test earned us 
 Look at the increase in CVR from the test (Jun 19 – Jul 28), and use 
@@ -121,9 +136,7 @@ SELECT
 FROM website_pageviews
 WHERE pageview_url = '/lander-1';
 
-
-
--- for this step, we'll find the first pageview id 
+-- For this step, we'll find the first pageview id 
 
 CREATE TEMPORARY TABLE first_test_pageviews
 SELECT
@@ -190,7 +203,6 @@ WHERE utm_source = 'gsearch'
 ;
 -- max website_session_id = 17145
 
-
 SELECT 
 	COUNT(website_session_id) AS sessions_since_test
 FROM website_sessions
@@ -204,11 +216,9 @@ WHERE created_at < '2012-11-27'
 -- X .0087 incremental conversion = 202 incremental orders since 7/29
 	-- roughly 4 months, so roughly 50 extra orders per month. Not bad!
 
-    
-
 /*
 7.	For the landing page test you analyzed previously, it would be great to show a full conversion funnel 
-from each of the two pages to orders. I will use the same time-period you analyzed last time (Jun 19 – Jul 28).
+from each of the two pages to orders. I will use the same time period you analyzed last time (Jun 19 – Jul 28).
 */ 
 
 SELECT
@@ -233,10 +243,6 @@ WHERE website_sessions.utm_source = 'gsearch'
 ORDER BY 
 	website_sessions.website_session_id,
     website_pageviews.created_at;
-
-
-
-
 
 CREATE TEMPORARY TABLE session_level_made_it_flagged
 SELECT
@@ -278,8 +284,6 @@ GROUP BY
 	website_session_id
 ;
 
- 
-
 -- then this would produce the final output, part 1
 SELECT
 	CASE 
@@ -298,8 +302,6 @@ FROM session_level_made_it_flagged
 GROUP BY 1
 ;
 
-
-
 -- then this as final output part 2 - click rates
 
 SELECT
@@ -309,16 +311,14 @@ SELECT
         ELSE 'uh oh... check logic' 
 	END AS segment, 
 	COUNT(DISTINCT CASE WHEN product_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT website_session_id) AS lander_click_rt,
-    COUNT(DISTINCT CASE WHEN mrfuzzy_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN product_made_it = 1 THEN website_session_id ELSE NULL END) AS products_click_rt,
-    COUNT(DISTINCT CASE WHEN cart_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN mrfuzzy_made_it = 1 THEN website_session_id ELSE NULL END) AS mrfuzzy_click_rt,
-    COUNT(DISTINCT CASE WHEN shipping_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN cart_made_it = 1 THEN website_session_id ELSE NULL END) AS cart_click_rt,
-    COUNT(DISTINCT CASE WHEN billing_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN shipping_made_it = 1 THEN website_session_id ELSE NULL END) AS shipping_click_rt,
-    COUNT(DISTINCT CASE WHEN thankyou_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN billing_made_it = 1 THEN website_session_id ELSE NULL END) AS billing_click_rt
+    	COUNT(DISTINCT CASE WHEN mrfuzzy_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN product_made_it = 1 THEN website_session_id ELSE NULL END) AS products_click_rt,
+	COUNT(DISTINCT CASE WHEN cart_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN mrfuzzy_made_it = 1 THEN website_session_id ELSE NULL END) AS mrfuzzy_click_rt,
+	COUNT(DISTINCT CASE WHEN shipping_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN cart_made_it = 1 THEN website_session_id ELSE NULL END) AS cart_click_rt,
+	COUNT(DISTINCT CASE WHEN billing_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN shipping_made_it = 1 THEN website_session_id ELSE NULL END) AS shipping_click_rt,
+	COUNT(DISTINCT CASE WHEN thankyou_made_it = 1 THEN website_session_id ELSE NULL END)/COUNT(DISTINCT CASE WHEN billing_made_it = 1 THEN website_session_id ELSE NULL END) AS billing_click_rt
 FROM session_level_made_it_flagged
 GROUP BY 1
 ;
-
-
 
 /*
 8.	I’d love for you to quantify the impact of our billing test, as well. I will analyze the lift generated 
